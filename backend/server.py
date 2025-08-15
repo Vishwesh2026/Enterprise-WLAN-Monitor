@@ -14,10 +14,48 @@ from datetime import datetime
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# Mongo or In-Memory DB (for tests)
+USE_INMEM = bool(os.environ.get('PYTEST_CURRENT_TEST'))
+if not USE_INMEM:
+    mongo_url = os.environ['MONGO_URL']
+    client = AsyncIOMotorClient(mongo_url)
+    db = client[os.environ['DB_NAME']]
+else:
+    client = None
+    class InMemoryCursor:
+        def __init__(self, data):
+            self._data = data
+        async def to_list(self, n: int):
+            return list(self._data)[:n]
+    class InMemoryCollection:
+        def __init__(self):
+            self.items = []
+        async def insert_one(self, doc):
+            self.items.append(dict(doc))
+        async def update_one(self, filt, update, upsert=False):
+            # very simple $set upsert
+            idx = next((i for i, d in enumerate(self.items) if all(d.get(k)==v for k,v in filt.items())), -1)
+            new_doc = update.get("$set", {})
+            if idx >= 0:
+                self.items[idx].update(new_doc)
+            elif upsert:
+                self.items.append({**filt, **new_doc})
+        async def find_one(self, filt):
+            for d in self.items:
+                if all(d.get(k)==v for k,v in filt.items()):
+                    return dict(d)
+            return None
+        def find(self, filt=None):
+            if not filt:
+                return InMemoryCursor(list(self.items))
+            filtered = [d for d in self.items if all(d.get(k)==v for k,v in filt.items())]
+            return InMemoryCursor(filtered)
+    class InMemoryDB:
+        def __init__(self):
+            self.status_checks = InMemoryCollection()
+            self.devices = InMemoryCollection()
+            self.alerts = InMemoryCollection()
+    db = InMemoryDB()
 
 # Create the main app without a prefix
 app = FastAPI()
