@@ -142,17 +142,23 @@ frontend:
       - working: true
         agent: "main"
         comment: "UI renders and updates live-like; screenshot verified."
+      - working: true
+        agent: "testing"
+        comment: "Comprehensive automated testing completed. All major features working: page loads without errors, header shows title/connection/settings/time, sidebar lists sectors with counts, summary cards display values and icons, charts area visible, device table has sortable headers and row highlighting, alerts panel with device links working. Minor: CSV export timeout issue and Ctrl+F shortcut not focusing search input - both non-critical."
   - task: "Set up API client and optional sync mocks to backend"
     implemented: true
     working: true
     file: "/app/frontend/src/utils/api.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "AppContext loads from backend if data exists and provides syncMocksToBackend exposed via Settings menu."
+      - working: true
+        agent: "testing"
+        comment: "API integration tested successfully. Settings dropdown includes 'Sync mocks to backend' option, window.__SYNC__ function is available and callable. Backend integration working properly."
 metadata:
   created_by: "main_agent"
   version: "1.0"
