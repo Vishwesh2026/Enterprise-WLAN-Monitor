@@ -295,7 +295,7 @@ function DeviceTable() {
       const k = sort.key;
       const va = a[k];
       const vb = b[k];
-      if (typeof va === "number" &amp;&amp; typeof vb === "number") return sort.dir === "asc" ? va - vb : vb - va;
+      if (typeof va === "number" && typeof vb === "number") return sort.dir === "asc" ? va - vb : vb - va;
       return sort.dir === "asc" ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
     });
     return arr;
