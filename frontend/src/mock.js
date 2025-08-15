@@ -197,7 +197,7 @@ export function updateDeviceRandom(device) {
   const clients = clamp(device.clients + delta() * randomBetween(0, 3, 0), 0, 200);
   const errorRate = clamp(device.errorRate + delta() * randomBetween(0, 0.6, 1), 0, 20);
   const temperature = clamp(device.temperature + delta() * randomBetween(0, 1.5, 1), 15, 80);
-  const status = rssi &lt; -80 || errorRate &gt; 5 || bandwidth &lt; 20 ? (Math.random() &gt; 0.7 ? "offline" : "critical") : device.status === "offline" &amp;&amp; Math.random() &gt; 0.5 ? "online" : device.status;
+  const status = rssi < -80 || errorRate &gt; 5 || bandwidth &lt; 20 ? (Math.random() &gt; 0.7 ? "offline" : "critical") : device.status === "offline" &amp;&amp; Math.random() &gt; 0.5 ? "online" : device.status;
   return {
     ...device,
     rssi,
