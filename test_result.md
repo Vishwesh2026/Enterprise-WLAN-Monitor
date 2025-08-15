@@ -175,3 +175,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Backend adjusted for test friendliness (USE_INMEM_DB=1). Please rerun tests."
+  - agent: "testing"
+    message: "Frontend automated testing completed successfully. All major functionality verified: page loads, header elements, sidebar sectors, summary cards, charts area, device table with sorting and row selection, alerts panel with device links, settings dropdown with sync functionality. Minor issues: CSV export timeout and Ctrl+F shortcut - both non-critical. Application is working well and ready for production."
