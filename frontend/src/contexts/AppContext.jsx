@@ -2,44 +2,44 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import { initialDevices, initialAlerts, updateDeviceRandom, generateRandomAlert } from "../mock";
 import useWebSocketMock from "../hooks/useWebSocket";
 import { useToast } from "../hooks/use-toast";
+import { api } from "../utils/api";
 
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
   const { toast } = useToast();
-  const [devices, setDevices] = useState(() => {
-    try {
-      const cached = localStorage.getItem("wlan_devices");
-      return cached ? JSON.parse(cached) : initialDevices;
-    } catch {
-      return initialDevices;
-    }
-  });
-  const [alerts, setAlerts] = useState(() => {
-    try {
-      const cached = localStorage.getItem("wlan_alerts");
-      return cached ? JSON.parse(cached) : initialAlerts;
-    } catch {
-      return initialAlerts;
-    }
-  });
+  const [devices, setDevices] = useState(initialDevices);
+  const [alerts, setAlerts] = useState(initialAlerts);
   const [activeSector, setActiveSector] = useState(() => localStorage.getItem("wlan_sector") || "all");
   const [search, setSearch] = useState("");
   const [selectedDeviceId, setSelectedDeviceId] = useState(null);
   const ws = useWebSocketMock();
 
-  // Persist
+  // Load from backend if available
   useEffect(() => {
-    localStorage.setItem("wlan_devices", JSON.stringify(devices));
-  }, [devices]);
-  useEffect(() => {
-    localStorage.setItem("wlan_alerts", JSON.stringify(alerts));
-  }, [alerts]);
+    let mounted = true;
+    (async () => {
+      try {
+        const [dRes, aRes] = await Promise.all([
+          api.get("/devices"),
+          api.get("/alerts"),
+        ]);
+        if (!mounted) return;
+        if (Array.isArray(dRes.data) && dRes.data.length) setDevices(dRes.data);
+        if (Array.isArray(aRes.data) && aRes.data.length) setAlerts(aRes.data);
+      } catch (e) {
+        console.warn("Backend not ready, using mocks", e?.message || e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  // Persist only simple preferences
   useEffect(() => {
     localStorage.setItem("wlan_sector", activeSector);
   }, [activeSector]);
 
-  // Simulate realtime device updates
+  // Simulate realtime device updates for UI feel
   useEffect(() => {
     const interval = setInterval(() => {
       setDevices((prev) => prev.map((d) => updateDeviceRandom(d)));
@@ -73,9 +73,7 @@ export function AppProvider({ children }) {
 
   const sectors = useMemo(() => {
     const counts = { education: 0, healthcare: 0, logistics: 0, government: 0 };
-    devices.forEach((d) => {
-      if (counts[d.sector] !== undefined) counts[d.sector] += 1;
-    });
+    devices.forEach((d) => { if (counts[d.sector] !== undefined) counts[d.sector] += 1; });
     return [
       { key: "all", label: "All Devices", count: devices.length },
       { key: "education", label: "Education", count: counts.education },
@@ -98,6 +96,20 @@ export function AppProvider({ children }) {
     });
   }, [devices, activeSector, search]);
 
+  // Expose a sync function to push current mock data to backend
+  async function syncMocksToBackend() {
+    try {
+      await api.post("/devices/bulk", { devices });
+      await api.post("/alerts/bulk", { alerts });
+      const [dRes, aRes] = await Promise.all([api.get("/devices"), api.get("/alerts")]);
+      setDevices(Array.isArray(dRes.data) ? dRes.data : devices);
+      setAlerts(Array.isArray(aRes.data) ? aRes.data : alerts);
+      toast({ title: "Synced to backend", description: "Mocks stored in database." });
+    } catch (e) {
+      toast({ title: "Sync failed", description: String(e?.message || e) });
+    }
+  }
+
   const value = {
     devices,
     alerts,
@@ -110,6 +122,7 @@ export function AppProvider({ children }) {
     selectedDeviceId,
     setSelectedDeviceId,
     connectionStatus: ws.status,
+    syncMocksToBackend,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
