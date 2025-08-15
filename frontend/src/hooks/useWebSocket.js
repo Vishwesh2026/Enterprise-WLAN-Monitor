@@ -13,7 +13,7 @@ export default function useWebSocketMock() {
 
     // Periodically simulate random disconnects and reconnects
     reconnectRef.current = setInterval(() => {
-      if (Math.random() &lt; 0.08) {
+      if (Math.random() < 0.08) {
         setStatus("disconnected");
         setTimeout(() => setStatus("connected"), 1200);
       }
