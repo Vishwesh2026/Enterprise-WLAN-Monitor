@@ -191,7 +191,7 @@ async def list_alerts(deviceId: Optional[str] = None):
 
 @api_router.post("/alerts", response_model=Alert, status_code=201)
 async def create_alert(alert: AlertCreate):
-    await db.alerts.update_one({"id": alert.id}, {"$set": alert.dict()}, upsert=True)
+    await db.alerts.update_one({"id": alert.id}, {"$set": alert.model_dump()}, upsert=True)
     return alert
 
 
