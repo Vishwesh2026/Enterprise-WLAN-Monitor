@@ -53,7 +53,7 @@ export function AppProvider({ children }) {
       if (Math.random() < 0.4) {
         setAlerts((prev) => {
           const next = [...prev, generateRandomAlert(devices)];
-          if (next.length &gt; 50) next.shift();
+          if (next.length > 50) next.shift();
           return next;
         });
       }
