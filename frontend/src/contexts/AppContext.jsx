@@ -50,7 +50,7 @@ export function AppProvider({ children }) {
   // Simulate random alerts and show toast
   useEffect(() => {
     const interval = setInterval(() => {
-      if (Math.random() &lt; 0.4) {
+      if (Math.random() < 0.4) {
         setAlerts((prev) => {
           const next = [...prev, generateRandomAlert(devices)];
           if (next.length &gt; 50) next.shift();
