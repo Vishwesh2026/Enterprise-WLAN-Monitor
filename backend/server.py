@@ -15,7 +15,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # Mongo or In-Memory DB (for tests)
-USE_INMEM = bool(os.environ.get('PYTEST_CURRENT_TEST'))
+USE_INMEM = os.environ.get('USE_INMEM_DB') == '1'
 if not USE_INMEM:
     mongo_url = os.environ['MONGO_URL']
     client = AsyncIOMotorClient(mongo_url)
@@ -140,7 +140,7 @@ async def list_devices(sector: Optional[str] = None):
     query: Dict[str, Any] = {}
     if sector and sector != "all":
         query["sector"] = sector
-    docs = await db.devices.find(query).to_list(2000) if not USE_INMEM else await db.devices.find(query).to_list(2000)
+    docs = await db.devices.find(query).to_list(2000)
     return [Device(**d) for d in docs]
 
 
@@ -201,7 +201,7 @@ async def bulk_alerts(payload: Dict[str, List[AlertCreate]]):
     if not items:
         return []
     for it in items:
-        await db.alerts.update_one({"id": it.id}, {"$set": it.dict()}, upsert=True)
+        await db.alerts.update_one({"id": it.id}, {"$set": it.model_dump()}, upsert=True)
     docs = await db.alerts.find({"id": {"$in": [it.id for it in items]}}).to_list(2000)
     return [Alert(**d) for d in docs]
 
@@ -226,4 +226,5 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
-    client.close()
+    if client:
+        client.close()

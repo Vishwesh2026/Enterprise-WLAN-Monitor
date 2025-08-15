@@ -114,7 +114,7 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Added GET/POST/PATCH devices, sector filtering, alerts list/bulk in server.py; routes under /api."
+        comment: "Added GET/POST/PATCH devices, sector filtering, alerts list/bulk in server.py; routes under /api. Added in-memory DB for tests."
   - task: "Write backend tests for devices/alerts"
     implemented: true
     working: false
@@ -123,9 +123,9 @@ backend:
     priority: "high"
     needs_retesting: true
     status_history:
-      - working: true
+      - working: false
         agent: "main"
-        comment: "Added pytest using TestClient to verify /api root, device create/list, sector filter, alerts bulk/list."
+        comment: "Initial failures due to event loop; switched to in-memory db + anyio backend asyncio. Needs rerun."
 frontend:
   - task: "Mock-first UI with context, charts, table, alerts, toasts"
     implemented: true
@@ -152,16 +152,16 @@ frontend:
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Run backend tests to verify new endpoints"
+    - "Run backend tests after switching to in-memory DB flag"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Backend implemented with CRUD + tests; please run pytest. After backend passes, I will ask user to approve automated frontend testing."
+    message: "Backend adjusted for test friendliness (USE_INMEM_DB=1). Please rerun tests."

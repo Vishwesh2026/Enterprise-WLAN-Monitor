@@ -1,6 +1,7 @@
-from fastapi.testclient import TestClient
 import sys, os
+os.environ["USE_INMEM_DB"] = "1"
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from fastapi.testclient import TestClient
 from server import app
 
 client = TestClient(app)

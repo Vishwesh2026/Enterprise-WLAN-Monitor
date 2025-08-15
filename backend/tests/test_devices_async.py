@@ -1,8 +1,14 @@
 import pytest
 from httpx import AsyncClient
 import sys, os
+os.environ["USE_INMEM_DB"] = "1"
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from server import app
+
+
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
 
 
 @pytest.mark.anyio
