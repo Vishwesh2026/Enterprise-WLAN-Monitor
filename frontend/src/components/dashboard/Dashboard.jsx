@@ -422,7 +422,7 @@ export default function Dashboard() {
         e.preventDefault();
         window.location.reload();
       }
-      if ((e.ctrlKey || e.metaKey) &amp;&amp; e.key.toLowerCase() === "f") {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") {
         e.preventDefault();
         const el = document.querySelector("input[aria-label='Search devices']");
         if (el) el.focus();
