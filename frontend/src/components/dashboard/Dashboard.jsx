@@ -418,7 +418,7 @@ export default function Dashboard() {
   // Keyboard shortcuts
   React.useEffect(() => {
     function onKey(e) {
-      if ((e.ctrlKey || e.metaKey) &amp;&amp; e.key.toLowerCase() === "r") {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "r") {
         e.preventDefault();
         window.location.reload();
       }
