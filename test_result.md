@@ -101,3 +101,67 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Build Enterprise WLAN Monitor full-stack app with mock-first frontend and FastAPI+Mongo backend; then integrate."
+backend:
+  - task: "Implement devices and alerts CRUD endpoints"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added GET/POST/PATCH devices, sector filtering, alerts list/bulk in server.py; routes under /api."
+  - task: "Write backend tests for devices/alerts"
+    implemented: true
+    working: false
+    file: "/app/backend/tests/test_devices.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added pytest using TestClient to verify /api root, device create/list, sector filter, alerts bulk/list."
+frontend:
+  - task: "Mock-first UI with context, charts, table, alerts, toasts"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/components/dashboard/Dashboard.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "UI renders and updates live-like; screenshot verified."
+  - task: "Set up API client and optional sync mocks to backend"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/utils/api.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "AppContext loads from backend if data exists and provides syncMocksToBackend exposed via Settings menu."
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Run backend tests to verify new endpoints"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Backend implemented with CRUD + tests; please run pytest. After backend passes, I will ask user to approve automated frontend testing."
