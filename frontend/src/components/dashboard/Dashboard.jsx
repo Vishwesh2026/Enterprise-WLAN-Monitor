@@ -92,6 +92,17 @@ function Header() {
               <DropdownMenuItem onClick={() => window.print()} className="gap-2">
                 <Printer size={16} /> Print
               </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2" onClick={() => {
+                const btn = document.createElement('button');
+                btn.disabled = true; // a simple visual cue could be added later
+              }}>
+                <Filter size={16} /> Placeholder
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2" onClick={() => {
+                try { window.__SYNC__?.(); } catch(e) {}
+              }}>
+                <Download size={16} /> Sync mocks to backend
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <a href="https://emergent.sh" target="_blank" rel="noreferrer" className="flex gap-2 items-center">
                   <Activity size={16} /> About
