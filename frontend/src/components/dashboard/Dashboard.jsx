@@ -25,7 +25,7 @@ const COLORS = {
 
 function formatBandwidth(v) {
   if (v >= 1000) return (v / 1000).toFixed(2) + " Gbps";
-  if (v &gt;= 1) return v.toFixed(1) + " Mbps";
+  if (v >= 1) return v.toFixed(1) + " Mbps";
   return (v * 1000).toFixed(0) + " Kbps";
 }
 function formatPercent(v) { return `${Math.max(0, Math.min(100, v)).toFixed(0)}%`; }
