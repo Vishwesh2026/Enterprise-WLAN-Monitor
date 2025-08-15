@@ -307,7 +307,7 @@ function DeviceTable() {
   function th(label, key) {
     return (
       <TableHead
-        onClick={() => setSort((s) => ({ key, dir: s.key === key &amp;&amp; s.dir === "asc" ? "desc" : "asc" }))}
+        onClick={() => setSort((s) => ({ key, dir: s.key === key && s.dir === "asc" ? "desc" : "asc" }))}
         className="cursor-pointer select-none"
         aria-sort={sort.key === key ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
       >
