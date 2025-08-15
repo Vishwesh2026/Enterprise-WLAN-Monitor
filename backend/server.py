@@ -140,7 +140,7 @@ async def list_devices(sector: Optional[str] = None):
     query: Dict[str, Any] = {}
     if sector and sector != "all":
         query["sector"] = sector
-    docs = await db.devices.find(query).to_list(2000)
+    docs = await db.devices.find(query).to_list(2000) if not USE_INMEM else await db.devices.find(query).to_list(2000)
     return [Device(**d) for d in docs]
 
 
