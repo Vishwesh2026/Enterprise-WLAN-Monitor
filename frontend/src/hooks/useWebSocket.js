@@ -9,7 +9,7 @@ export default function useWebSocketMock() {
   React.useEffect(() => {
     let mounted = true;
     // Simulate initial connection delay
-    const t = setTimeout(() => mounted &amp;&amp; setStatus("connected"), 600);
+    const t = setTimeout(() => mounted && setStatus("connected"), 600);
 
     // Periodically simulate random disconnects and reconnects
     reconnectRef.current = setInterval(() => {
