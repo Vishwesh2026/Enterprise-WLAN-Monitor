@@ -163,7 +163,7 @@ async def bulk_devices(payload: Dict[str, List[DeviceCreate]]):
         return []
     # upsert each (simple, safe for first pass)
     for it in items:
-        await db.devices.update_one({"id": it.id}, {"$set": it.dict()}, upsert=True)
+        await db.devices.update_one({"id": it.id}, {"$set": it.model_dump()}, upsert=True)
     docs = await db.devices.find({"id": {"$in": [it.id for it in items]}}).to_list(2000)
     return [Device(**d) for d in docs]
 
