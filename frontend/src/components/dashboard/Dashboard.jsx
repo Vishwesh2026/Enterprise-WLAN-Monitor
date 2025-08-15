@@ -36,7 +36,7 @@ function healthScore(d) {
   // Rough health metric 0-100
   let score = 100;
   if (d.rssi < -80) score -= 25;
-  if (d.errorRate &gt; 2) score -= 25;
+  if (d.errorRate > 2) score -= 25;
   if (d.bandwidth &lt; 100) score -= 20;
   if (d.status === "warning") score -= 10;
   if (d.status === "critical" || d.status === "offline") score -= 30;
