@@ -424,7 +424,8 @@ function AlertsPanel() {
 }
 
 export default function Dashboard() {
-  const { setSearch } = useApp();
+  const { setSearch, syncMocksToBackend } = useApp();
+  React.useEffect(() => { window.__SYNC__ = syncMocksToBackend; return () => { delete window.__SYNC__; }; }, [syncMocksToBackend]);
 
   // Keyboard shortcuts
   React.useEffect(() => {
