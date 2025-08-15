@@ -152,7 +152,7 @@ async def list_devices_by_sector(sector: str):
 
 @api_router.post("/devices", response_model=Device, status_code=201)
 async def create_device(dev: DeviceCreate):
-    await db.devices.update_one({"id": dev.id}, {"$set": dev.dict()}, upsert=True)
+    await db.devices.update_one({"id": dev.id}, {"$set": dev.model_dump()}, upsert=True)
     return dev
 
 
