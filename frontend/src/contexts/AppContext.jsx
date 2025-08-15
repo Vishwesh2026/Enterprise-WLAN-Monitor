@@ -88,7 +88,7 @@ export function AppProvider({ children }) {
   const filteredDevices = useMemo(() => {
     const term = search.trim().toLowerCase();
     return devices.filter((d) => {
-      if (activeSector !== "all" &amp;&amp; d.sector !== activeSector) return false;
+      if (activeSector !== "all" && d.sector !== activeSector) return false;
       if (!term) return true;
       return (
         d.id.toLowerCase().includes(term) ||
