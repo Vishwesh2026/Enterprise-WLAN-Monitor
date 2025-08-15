@@ -24,7 +24,7 @@ const COLORS = {
 };
 
 function formatBandwidth(v) {
-  if (v &gt;= 1000) return (v / 1000).toFixed(2) + " Gbps";
+  if (v >= 1000) return (v / 1000).toFixed(2) + " Gbps";
   if (v &gt;= 1) return v.toFixed(1) + " Mbps";
   return (v * 1000).toFixed(0) + " Kbps";
 }
