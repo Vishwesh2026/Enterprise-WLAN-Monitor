@@ -149,6 +149,10 @@ frontend:
     implemented: true
     working: true
     file: "/app/frontend/src/utils/api.js"
+      - working: true
+        agent: "main"
+        comment: "Switched to native WebSocket client; charts upgraded via Chart.js previously; UI intact. Needs frontend retest focusing on WS error handling and chart rendering."
+
     stuck_count: 0
     priority: "medium"
     needs_retesting: false
