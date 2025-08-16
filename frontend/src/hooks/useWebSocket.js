@@ -1,36 +1,58 @@
 import React from "react";
+import { io } from "socket.io-client";
 
-// Mocked WebSocket hook with auto-reconnect simulation
-export default function useWebSocketMock() {
-  const [status, setStatus] = React.useState("connecting"); // connecting | connected | disconnected
+// Real WebSocket via socket.io-client with auto-reconnect and error handling
+export default function useWebSocket({ url }) {
+  const [status, setStatus] = React.useState("connecting"); // connecting | connected | disconnected | error
   const [lastMessage, setLastMessage] = React.useState(null);
-  const reconnectRef = React.useRef(null);
+  const socketRef = React.useRef(null);
+  const reconnectAttempts = React.useRef(0);
 
   React.useEffect(() => {
-    let mounted = true;
-    // Simulate initial connection delay
-    const t = setTimeout(() => mounted && setStatus("connected"), 600);
+    if (!url) return;
 
-    // Periodically simulate random disconnects and reconnects
-    reconnectRef.current = setInterval(() => {
-      if (Math.random() < 0.08) {
-        setStatus("disconnected");
-        setTimeout(() => setStatus("connected"), 1200);
-      }
-      // Emit a heartbeat message
-      setLastMessage({ type: "heartbeat", ts: Date.now() });
-    }, 3000);
+    // Connect with reconnection enabled
+    const socket = io(url, {
+      transports: ["websocket"],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 8000,
+      timeout: 10000,
+    });
+
+    socketRef.current = socket;
+
+    const onConnect = () => {
+      reconnectAttempts.current = 0;
+      setStatus("connected");
+    };
+    const onDisconnect = () => setStatus("disconnected");
+    const onConnectError = (err) => {
+      setStatus("error");
+      setLastMessage({ type: "connect_error", error: err?.message || String(err), ts: Date.now() });
+    };
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+    socket.on("connect_error", onConnectError);
+
+    // Generic channel for server-emitted updates, e.g., { type, payload }
+    socket.on("wlan:update", (data) => setLastMessage({ type: "update", payload: data, ts: Date.now() }));
+    socket.on("wlan:alert", (data) => setLastMessage({ type: "alert", payload: data, ts: Date.now() }));
+
+    // Heartbeat or ping from server
+    socket.on("wlan:heartbeat", () => setLastMessage({ type: "heartbeat", ts: Date.now() }));
 
     return () => {
-      mounted = false;
-      clearTimeout(t);
-      if (reconnectRef.current) clearInterval(reconnectRef.current);
+      try { socket.close(); } catch {}
+      socketRef.current = null;
     };
-  }, []);
+  }, [url]);
 
-  const send = React.useCallback((msg) => {
-    // In mock mode, just echo back after a short delay
-    setTimeout(() => setLastMessage({ type: "echo", payload: msg, ts: Date.now() }), 300);
+  const send = React.useCallback((event, payload) => {
+    if (!socketRef.current) return;
+    try { socketRef.current.emit(event, payload); } catch {}
   }, []);
 
   return { status, lastMessage, send };

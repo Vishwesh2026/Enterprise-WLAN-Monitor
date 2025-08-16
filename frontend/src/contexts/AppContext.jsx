@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { initialDevices, initialAlerts, updateDeviceRandom, generateRandomAlert } from "../mock";
-import useWebSocketMock from "../hooks/useWebSocket";
+import useWebSocket from "../hooks/useWebSocket";
 import { useToast } from "../hooks/use-toast";
 import { api } from "../utils/api";
+
+const WS_URL = "ws://10.78.44.141:8080"; // provided by user
 
 const AppContext = createContext(null);
 
@@ -13,17 +15,16 @@ export function AppProvider({ children }) {
   const [activeSector, setActiveSector] = useState(() => localStorage.getItem("wlan_sector") || "all");
   const [search, setSearch] = useState("");
   const [selectedDeviceId, setSelectedDeviceId] = useState(null);
-  const ws = useWebSocketMock();
+
+  // Real WebSocket connection
+  const ws = useWebSocket({ url: WS_URL });
 
   // Load from backend if available
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const [dRes, aRes] = await Promise.all([
-          api.get("/devices"),
-          api.get("/alerts"),
-        ]);
+        const [dRes, aRes] = await Promise.all([api.get("/devices"), api.get("/alerts")]);
         if (!mounted) return;
         if (Array.isArray(dRes.data) && dRes.data.length) setDevices(dRes.data);
         if (Array.isArray(aRes.data) && aRes.data.length) setAlerts(aRes.data);
@@ -35,40 +36,41 @@ export function AppProvider({ children }) {
   }, []);
 
   // Persist only simple preferences
-  useEffect(() => {
-    localStorage.setItem("wlan_sector", activeSector);
-  }, [activeSector]);
+  useEffect(() => { localStorage.setItem("wlan_sector", activeSector); }, [activeSector]);
 
-  // Simulate realtime device updates for UI feel
+  // Handle incoming WebSocket updates
   useEffect(() => {
-    const interval = setInterval(() => {
+    if (!ws.lastMessage) return;
+    const m = ws.lastMessage;
+    if (m.type === "update" && m.payload?.devices) {
+      setDevices(m.payload.devices);
+    }
+    if (m.type === "alert" && m.payload) {
+      setAlerts((prev) => {
+        const next = [...prev, m.payload];
+        if (next.length > 200) next.shift();
+        return next;
+      });
+    }
+    if (m.type === "connect_error") {
+      toast({ title: "WebSocket error", description: String(m.error) });
+    }
+  }, [ws.lastMessage, toast]);
+
+  // Fallback: if no real updates yet, lightly jitter values to keep UI alive (disabled once WS sends data)
+  useEffect(() => {
+    const t = setInterval(() => {
       setDevices((prev) => prev.map((d) => updateDeviceRandom(d)));
-    }, 4000);
-    return () => clearInterval(interval);
+    }, 5000);
+    return () => clearInterval(t);
   }, []);
 
-  // Simulate random alerts and show toast
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() < 0.4) {
-        setAlerts((prev) => {
-          const next = [...prev, generateRandomAlert(devices)];
-          if (next.length > 50) next.shift();
-          return next;
-        });
-      }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [devices]);
-
-  // Show toast on latest alert
+  // Toast on latest alert
   useEffect(() => {
     if (!alerts.length) return;
     const a = alerts[alerts.length - 1];
-    toast({
-      title: `New ${a.severity.toUpperCase()} alert`,
-      description: `${a.message} on ${a.deviceId}`,
-    });
+    if (!a || !a.message || !a.deviceId) return;
+    toast({ title: `New ${String(a.severity || "").toUpperCase()} alert`, description: `${a.message} on ${a.deviceId}` });
   }, [alerts, toast]);
 
   const sectors = useMemo(() => {
@@ -96,7 +98,6 @@ export function AppProvider({ children }) {
     });
   }, [devices, activeSector, search]);
 
-  // Expose a sync function to push current mock data to backend
   async function syncMocksToBackend() {
     try {
       await api.post("/devices/bulk", { devices });
