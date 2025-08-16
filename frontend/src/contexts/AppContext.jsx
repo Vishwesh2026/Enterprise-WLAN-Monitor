@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { initialDevices, initialAlerts, updateDeviceRandom, generateRandomAlert } from "../mock";
+import { initialDevices, initialAlerts, updateDeviceRandom } from "../mock";
 import useWebSocket from "../hooks/useWebSocket";
 import { useToast } from "../hooks/use-toast";
 import { api } from "../utils/api";
 
-const WS_URL = "ws://10.78.44.141:8080"; // provided by user
+const WS_URL = "ws://10.78.44.141:8080"; // provided by user (raw WebSocket)
 
 const AppContext = createContext(null);
 
@@ -16,7 +16,7 @@ export function AppProvider({ children }) {
   const [search, setSearch] = useState("");
   const [selectedDeviceId, setSelectedDeviceId] = useState(null);
 
-  // Real WebSocket connection
+  // Real WebSocket connection (raw WS)
   const ws = useWebSocket({ url: WS_URL });
 
   // Load from backend if available
@@ -28,22 +28,20 @@ export function AppProvider({ children }) {
         if (!mounted) return;
         if (Array.isArray(dRes.data) && dRes.data.length) setDevices(dRes.data);
         if (Array.isArray(aRes.data) && aRes.data.length) setAlerts(aRes.data);
-      } catch (e) {
-        console.warn("Backend not ready, using mocks", e?.message || e);
-      }
+      } catch (e) { console.warn("Backend not ready, using mocks", e?.message || e); }
     })();
     return () => { mounted = false; };
   }, []);
 
-  // Persist only simple preferences
   useEffect(() => { localStorage.setItem("wlan_sector", activeSector); }, [activeSector]);
 
-  // Handle incoming WebSocket updates
+  // Handle incoming WebSocket messages
   useEffect(() => {
     if (!ws.lastMessage) return;
     const m = ws.lastMessage;
-    if (m.type === "update" && m.payload?.devices) {
+    if (m.type === "device_update" && m.payload?.devices) {
       setDevices(m.payload.devices);
+      return;
     }
     if (m.type === "alert" && m.payload) {
       setAlerts((prev) => {
@@ -51,17 +49,16 @@ export function AppProvider({ children }) {
         if (next.length > 200) next.shift();
         return next;
       });
+      return;
     }
     if (m.type === "connect_error") {
       toast({ title: "WebSocket error", description: String(m.error) });
     }
   }, [ws.lastMessage, toast]);
 
-  // Fallback: if no real updates yet, lightly jitter values to keep UI alive (disabled once WS sends data)
+  // Fallback jitter if no real updates
   useEffect(() => {
-    const t = setInterval(() => {
-      setDevices((prev) => prev.map((d) => updateDeviceRandom(d)));
-    }, 5000);
+    const t = setInterval(() => { setDevices((prev) => prev.map((d) => updateDeviceRandom(d))); }, 5000);
     return () => clearInterval(t);
   }, []);
 
